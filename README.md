@@ -1,6 +1,6 @@
-# Final Project
+# Python Blackjack
 
-The game of BlackJack written in python using OOP principles by Weston LeBaron for UVU CS1410.
+The game of Blackjack written in python using OOP principles by Weston LeBaron for UVU CS1410.
 ## Installation
 
 If run on Codio, no extra setup needed.\

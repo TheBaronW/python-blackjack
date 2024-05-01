@@ -1,7 +1,6 @@
-from deck import Deck
-from game import Game
-from players import Player, Opponent
+'''main function for python-blackjack'''
 from time import sleep
+from game import Game
 
 def main():
     '''main loop'''
@@ -10,7 +9,7 @@ def main():
         game = Game()
         while not game.check_end():
             game.new_round()
-            game.print_player_status()
+            game.print_user_status()
             game.stake_players()
             game.print_start_of_round()
             game.hit_players()
@@ -19,7 +18,5 @@ def main():
         userin = input('would you like to play again? (y/n): ')
         if userin == 'n':
             done = True
-
-        
 
 main()

@@ -1,4 +1,4 @@
-# player objects
+'''player objects for python-blackjack'''
 from abc import ABC, abstractmethod
 from deck import Card, Deck
 from random import randint
@@ -11,20 +11,21 @@ class Person(ABC):
         self.bet:int = 0
         self.name = name
         self.is_dealer = False
+    def __repr__(self) -> str:
+        return self.name
     @abstractmethod
     def hit(self):
-        pass
-    @abstractmethod
-    def stake_chips(self):
         '''abstract method to be implemented in children'''
-        pass
+    @abstractmethod
+    def stake_chips(self, dealer_chips):
+        '''abstract method to be implemented in children'''
     def draw_card(self, deck:Deck):
         '''pick random Card from Deck object'''
         random_card:Card = deck.draw_pile[randint(0, len(deck) - 1)]
         deck.draw_pile.remove(random_card)
         self.hand.append(random_card)
     def print_count_diff(self):
-        pass
+        '''does something only in player, but necessary to be in opponent object as well'''
     def check_count(self):
         '''check if count is equal to 21'''
         num = self.get_count()[1]
@@ -33,14 +34,11 @@ class Person(ABC):
             return 'blackjack'
         if self.check_bust():
             return 'bust'
-        else:
-            if self.get_count()[0] == 21:
-                return 21
-            if 21-num < 21-point_count:
-                return num
-            return point_count
-    def __repr__(self):
-        return self.name
+        if self.get_count()[0] == 21:
+            return 21
+        if 21-num < 21-point_count:
+            return num
+        return point_count
     def check_bust(self):
         '''check if point cound is above 21'''
         point_count = 0
@@ -60,8 +58,12 @@ class Person(ABC):
         count = self.get_count()[0]
         aces = self.get_count()[2]
         if aces > 0:
-            return f'{f"{self.name + " "}" if self.name != "player_1" else ""}count: {count}{f"(soft {num})" if num else ""}'
-        return f'{self.name + ' ' if self.name != 'player_1' else ''}count: {count}'
+            if self.name != 'player_1':
+                return f'{self.name} count: {count} (soft {num})'
+            return f'count: {count} (soft {num})'
+        if self.name != 'player_1':
+            return f'{self.name} count: {count}'
+        return f'count: {count}'
     def check_blackjack(self):
         '''check if hand has "natural" 21 (ace and ten-card)'''
         if len(self.hand) == 2:
@@ -70,11 +72,14 @@ class Person(ABC):
                     return True
         return False
     def win(self):
+        '''win condition'''
         self.chips += self.bet
     def lose(self):
+        '''lose condition'''
         self.chips -= self.bet
 
     def get_count(self):
+        '''return count of self from self.hand values'''
         aces_11 = 0
         point_count = 0
         calc_list = []
@@ -87,6 +92,7 @@ class Person(ABC):
                 aces_11+=1
         aces_1 = 0
         num = False
+        # handles case of ace(s) in hand
         while aces_11 != 0:
             calc_list.append(point_count + aces_1 + (aces_11 * 11))
             calc_list.sort(reverse=True)
@@ -94,10 +100,10 @@ class Person(ABC):
                 if x <= 21:
                     num = x
             if point_count + aces_1 + (aces_11 * 11) == 21:
-                return [21, num, aces_1]
+                return [21, num, aces_1+aces_11]
             aces_1+=1
             aces_11-=1
-        return [point_count+aces_1, num, aces_1]
+        return [point_count+aces_1, num, aces_1+aces_11]
 
 
 

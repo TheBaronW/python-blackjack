@@ -1,9 +1,10 @@
+'''game object for python-blackjack'''
+from time import sleep
 from deck import Deck
 from players import Player, Opponent
-from time import sleep
 
 class Game:
-    '''game state class'''
+    '''track and act on game state for python-blackjack'''
     def __init__(self) -> None:
         self.make_players()
         self.deck = Deck()
@@ -30,6 +31,7 @@ class Game:
             pot+= player.bet
         return pot
     def stake_players(self):
+        '''call stake_chips method for all players'''
         if self.dealer.name == 'player_1':
             self.opponent.stake_chips(self.user.chips)
             print(f'Player 2 bet {self.opponent.bet} chips', end='. ')
@@ -39,13 +41,14 @@ class Game:
             self.opponent.bet = self.user.bet
         print(f'The pot now has {self.calculate_pot()} chips')
     def hit_players(self):
+        '''draw cards for all players'''
         for player in self:
             while player.hit():
                 player.draw_card(self.deck)
                 player.print_count_diff()
     def new_round(self):
         '''start a new round'''
-        print('-----------------------------------------------------------------------------------------------')
+        print('-----------------------------------------------------------------------------------')
         self.deck = Deck()
         for player in self:
             player.hand = []
@@ -61,6 +64,7 @@ class Game:
         print('starting', end=' ')
         print(self.user.print_count())
     def win_player(self):
+        '''choose players to have win/lose condition'''
         if self.user.check_count() == self.opponent.check_count():
             print(f'the opponent had a count of {self.opponent.get_count()[0]}')
             print('tie. Dividing the pot...')
@@ -80,7 +84,7 @@ class Game:
             self.user.lose()
             self.opponent.win()
         elif self.opponent.check_bust():
-            print(f'the opponent busted')
+            print('the opponent busted')
             self.user.win()
             self.opponent.lose()
         elif self.user.check_count() > self.opponent.check_count():
@@ -91,8 +95,6 @@ class Game:
             print(f'the opponent had a count of {self.opponent.get_count()[0]}')
             self.user.lose()
             self.opponent.win()
-
-        
     def assign_dealer(self):
         '''assign dealer attribute to next player in sequence'''
         for i, player in enumerate(self.players):
@@ -104,11 +106,12 @@ class Game:
                 self.dealer.is_dealer = True
                 player.is_dealer = False
                 break
-    def print_player_status(self):
+    def print_user_status(self):
+        '''print user status'''
         if self.dealer.name == 'player_1':
-                print('you are the dealer')
+            print('you are the dealer')
         else:
-                print('you are a player')
+            print('you are a player')
     def check_end(self):
         '''check if game end condition has happened'''
         active_players = len(self)
@@ -122,12 +125,6 @@ class Game:
                 print('you lose!')
             return True
         return False
-
-
-
-
-    
-
 
 def main():
     '''main loop'''

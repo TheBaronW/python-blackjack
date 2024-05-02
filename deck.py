@@ -6,6 +6,11 @@ class Card:
     def __init__(self, num:int, suit:str) -> None:
         self.num = num
         self.suit = suit
+        if self.num in range(1, 11):
+            self.value = self.num
+        else:
+            self.value = 10
+        
     def __repr__(self) -> str:
         if self.num == 1:
             return f'an Ace of {self.suit}'
@@ -35,8 +40,8 @@ class Deck:
             for suit in ['Clubs', 'Diamonds', 'Hearts', 'Spades']:
                 self.draw_pile.append(Card(num, suit))
     def pick_random(self):
-        '''pick random card in deck'''
-        random_card = self.draw_pile[randint(0, len(self))]
+        '''return random card in deck and remove it from deck'''
+        random_card = self.draw_pile[randint(0, len(self) -1)]
         self.draw_pile.remove(random_card)
         return random_card
 
@@ -45,7 +50,7 @@ def main():
     deck = Deck()
     for card in deck:
         print(card)
-    print(len(deck.draw_pile))
+    print(len(deck))
 
 if __name__ == "__main__":
     main()

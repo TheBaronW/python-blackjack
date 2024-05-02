@@ -45,7 +45,9 @@ class Game:
         for player in self:
             while player.hit():
                 player.draw_card(self.deck)
-                player.print_count_diff()
+                if player.name == 'player_1':
+                    player.print_count_diff()
+                    print('...')
     def new_round(self):
         '''start a new round'''
         print('-----------------------------------------------------------------------------------')
@@ -57,44 +59,54 @@ class Game:
         self.assign_dealer()
     def print_start_of_round(self):
         '''prints start of round data for user'''
-        print('hand:', self.user.hand)
-        sleep(2)
-        print(f'your opponent\'s first card is {str(self.players[1].hand[0])}')
-        sleep(2)
-        print('starting', end=' ')
+        opponent_card = self.opponent.hand[0]
+        print(f'your opponent\'s first card is {opponent_card} (known {self.opponent.print_count()})')
+        sleep(1)
+        print('hand:', self.user.hand, end= ', ')
         print(self.user.print_count())
     def win_player(self):
         '''choose players to have win/lose condition'''
+        if self.opponent.check_bust():
+            print('the opponent busted')
         if self.user.check_count() == self.opponent.check_count():
-            print(f'the opponent had a count of {self.opponent.get_count()[0]}')
+            if self.user.check_bust():
+                print('both players busted')
+            elif self.user.check_blackjack():
+                print('both players have a blackjack')
+            else:
+                print(f'both players have a count of {self.opponent.check_count()}')
             print('tie. Dividing the pot...')
-            sleep(1)
-        elif self.user.check_count() in ['blackjack', 21]:
-            print(f'the opponent had a count of {self.opponent.get_count()[0]}')
+        elif self.user.check_count() == 'blackjack':
+            self.opponent.print_count_diff()
             self.user.win()
             self.opponent.lose()
         elif self.opponent.check_count() == 'blackjack':
             self.user.lose()
             self.opponent.win()
+        elif self.user.check_count() == 21:
+            self.opponent.print_count_diff()
+            self.user.win()
+            self.opponent.lose()
         elif self.opponent.check_count() == 21:
-            print('the opponent had a count of 21')
+            print('the opponent has a count of 21')
             self.user.lose()
             self.opponent.win()
         elif self.user.check_bust():
+            self.opponent.print_count_diff()
             self.user.lose()
             self.opponent.win()
         elif self.opponent.check_bust():
-            print('the opponent busted')
             self.user.win()
             self.opponent.lose()
         elif self.user.check_count() > self.opponent.check_count():
-            print(f'the opponent had a count of {self.opponent.get_count()[0]}')
+            self.opponent.print_count_diff()
             self.user.win()
             self.opponent.lose()
         else:
-            print(f'the opponent had a count of {self.opponent.get_count()[0]}')
+            self.opponent.print_count_diff()
             self.user.lose()
             self.opponent.win()
+        input('Press enter to continue...')
     def assign_dealer(self):
         '''assign dealer attribute to next player in sequence'''
         for i, player in enumerate(self.players):

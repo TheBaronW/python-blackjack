@@ -1,7 +1,7 @@
 '''player objects for python-blackjack'''
+from random import randint
 from abc import ABC, abstractmethod
 from deck import Card, Deck
-from random import randint
 
 class Person(ABC):
     '''abstract class for actor objects'''
@@ -15,17 +15,17 @@ class Person(ABC):
         return self.name
     @abstractmethod
     def hit(self):
-        '''abstract method to be implemented in children'''
+        '''abstract method to be implemented in concrete'''
     @abstractmethod
     def stake_chips(self, dealer_chips):
-        '''abstract method to be implemented in children'''
-    def draw_card(self, deck:Deck):
-        '''pick random Card from Deck object'''
-        random_card:Card = deck.draw_pile[randint(0, len(deck) - 1)]
-        deck.draw_pile.remove(random_card)
-        self.hand.append(random_card)
+        '''abstract method to be implemented in concrete'''
+    @abstractmethod
     def print_count_diff(self):
-        '''does something only in player, but necessary to be in opponent object as well'''
+        '''prints ui style count for concrete object'''
+    def draw_card(self, deck:Deck):
+        '''draw Card from Deck object'''
+        random_card:Card = deck.pick_random()
+        self.hand.append(random_card)
     def check_count(self):
         '''check if count is equal to 21'''
         num = self.get_count()[1]
@@ -52,17 +52,13 @@ class Person(ABC):
         if point_count > 21:
             return True
         return False
-    def print_count(self):
+    def print_count(self, hand = None):
         '''print count to terminal'''
-        num = self.get_count()[1]
-        count = self.get_count()[0]
-        aces = self.get_count()[2]
-        if aces > 0:
-            if self.name != 'player_1':
-                return f'{self.name} count: {count} (soft {num})'
+        num = self.get_count(hand)[1]
+        count = self.get_count(hand)[0]
+        aces = self.get_count(hand)[2]
+        if aces > 0 and num:
             return f'count: {count} (soft {num})'
-        if self.name != 'player_1':
-            return f'{self.name} count: {count}'
         return f'count: {count}'
     def check_blackjack(self):
         '''check if hand has "natural" 21 (ace and ten-card)'''
@@ -78,16 +74,16 @@ class Person(ABC):
         '''lose condition'''
         self.chips -= self.bet
 
-    def get_count(self):
+    def get_count(self, hand = None):
         '''return count of self from self.hand values'''
         aces_11 = 0
         point_count = 0
+        if hand is None:
+            hand = self.hand
         calc_list = []
-        for card in self.hand:
-            if card.num in range(2, 11):
-                point_count+=card.num
-            elif card.num > 10:
-                point_count+= 10
+        for card in hand:
+            if card.num >= 2:
+                point_count+=card.value
             elif card.num == 1:
                 aces_11+=1
         aces_1 = 0
@@ -114,18 +110,19 @@ class Player(Person):
         super().__init__(name)
         self.is_dealer = True
     def print_count_diff(self):
-        print(f'you drew {str(self.hand[-1])} and you have {str(self.print_count())[7:]} points')
+        print(f'you drew {str(self.hand[-1])} and you have {self.print_count()[7:]} points')
     def stake_chips(self, dealer_chips:int):
         ''' if not dealer, prompt user to stake an amount of chips less or equal to dealer chips'''
+        print(f'you have {self.chips} chips, and your opponent has {dealer_chips} chips')
         done = False
         if not self.is_dealer:
             while not done:
-                amount = input(f'type the number of chips you\'d like to bet (default 1, you have {self.chips} chips): ')
+                amount = input('type the number of chips you\'d like to bet (default 1): ')
                 try:
                     amount = int(amount)
                 except ValueError:
                     if amount == '':
-                        amount = 1
+                        self.bet = 1
                         print('staking 1 chip', end='. ')
                         done = True
                     else:
@@ -134,7 +131,7 @@ class Player(Person):
                     if amount > self.chips:
                         print('you can\'t stake more chips than you have')
                     elif amount > dealer_chips:
-                        print(f'you can\'t stake more chips than the dealer has ({dealer_chips})')
+                        print(f'you can\'t stake more chips than the opponent has ({dealer_chips})')
                     else:
                         print(f'staking {amount} chips', end= '. ')
                         self.bet = amount
@@ -151,19 +148,26 @@ class Player(Person):
     def hit(self):
         if self.check_count() == 'blackjack':
             print('you got a blackjack!')
+            input('Press Enter to continue...')
             return False
-        if self.check_count() == 'bust':
+        if self.check_bust():
             print('you busted...')
+            input('Press enter to continue...')
             return False
         if self.check_count() == 21:
             print('you got a 21')
+            input('Press enter to continue...')
+            return False
+        if self.is_dealer:
+            if self.check_count() < 17:
+                input('below 17, so you must hit. Enter to continue...')
+                return True
+            input(f'{self.check_count()} is 17 or above, so you must stand. Enter to continue...')
             return False
         userin = input('would you like to hit? (draw a card y/n): ')
         if userin != 'n':
             return True
         return False
-            
-
 
 class Opponent(Person):
     '''CPU actor object'''
@@ -179,6 +183,11 @@ class Opponent(Person):
                 self.bet = randint(1, self.chips)
             else:
                 self.bet = randint(1, 4)
+    def print_count(self, hand = None):
+        return super().print_count([self.hand[0]])
+    def print_count_diff(self):
+        '''prints ui style count for opponent object'''
+        print(f'the opponent has a count of {self.check_count()}')
     def hit(self):
         if self.check_count() == 'blackjack':
             print(f'{self.name} got a blackjack!')
@@ -187,7 +196,11 @@ class Opponent(Person):
             return False
         if self.check_count() is True:
             return False
-        if self.get_count()[0] < 15:
+        if self.is_dealer:
+            if self.check_count() < 17:
+                return True
+            return False
+        if self.check_count() < 15:
             return True
         return False
 
